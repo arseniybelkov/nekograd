@@ -1,0 +1,6 @@
+numpy
+pandas
+scikit-learn
+scikit-image
+pytorch-lightning
+lightning-bolts
