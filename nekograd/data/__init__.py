@@ -1,2 +1,3 @@
 from .loader import DataLoader
-from .transforms import Augmentations, Preprocessing
+from .module import DataModule
+from .transforms import Augment, Preprocess

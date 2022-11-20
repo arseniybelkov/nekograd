@@ -1,1 +1,1 @@
-from .module import Module
+from .model import CoreModel

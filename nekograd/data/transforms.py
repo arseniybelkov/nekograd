@@ -4,7 +4,7 @@ import numpy as np
 from torch.utils.data import Dataset
 
 
-class Transform:
+class Transform(Dataset):
     def __init__(self, dataset: Dataset, *funcs: Callable):
         self.dataset = dataset
         self.funcs = funcs
@@ -20,12 +20,18 @@ class Transform:
     def __getitem__(self, idx: Union[str, int]):
         return self.apply(*self.dataset[idx])
     
+    def __repr__(self):
+        return f"{self.__class__.__name__}([{self.funcs}])"
     
-class Augmentation(Transform):
+    def __str__(self):
+        return self.__repr__()
+    
+    
+class Augment(Transform):
     pass
 
 
-class Preprocessing(Transform):
+class Preprocess(Transform):
     # TODO
     # @cache (lru seems not legit)
     def apply(self, *xs: np.ndarray):
