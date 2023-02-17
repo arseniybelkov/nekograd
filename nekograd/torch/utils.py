@@ -1,7 +1,9 @@
-from typing import Dict, Union, Sequence
+from itertools import chain
+from typing import Dict, Sequence, Union
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 
 def tensor2np(x: Union[torch.Tensor, Dict[str, torch.Tensor]]) -> np.ndarray:
@@ -20,3 +22,11 @@ def to_np(x: Sequence) -> np.ndarray:
     if isinstance(x, torch.Tensor):
         return tensor2np(x)
     return np.array(x)
+
+
+def switch_grad(*models: nn.Module, mode: bool=False) -> None:
+    if not isinstance(mode, bool):
+        raise ValueError(f"Expected `mode` to be True or False, got {mode}")
+
+    for p in chain.from_iterable(m.parameters() for m in models):
+        p.requires_grad = mode
