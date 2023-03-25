@@ -50,7 +50,7 @@ def stratified_k_fold(
     skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
     split = []
     for train_val, test in skf.split(ids, target):
-        train_val_skf = StratifiedKFold(math.round(1 / qval))
+        train_val_skf = StratifiedKFold(round(1 / qval))
         _target = [target[i] for i in train_val]
         _train, _val = next(train_val_skf.split(train_val, _target))
         train = [train_val[i] for i in _train]
@@ -91,7 +91,7 @@ def stratified_k_fold_single_test(
     """
     if not 0 < qtest < 1:
         raise ValueError(f"Expected qtest to be in range (0, 1), got {qtest}")
-    qtest = math.round(1 / qtest)
+    qtest = round(1 / qtest)
     _ids, _test = next(
         StratifiedKFold(qtest, shuffle=True, random_state=random_state).split(
             ids, target
