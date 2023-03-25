@@ -1,47 +1,43 @@
+# Copied from https://github.com/neuro-ml/deep_pipe
+
+
 import numpy as np
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import f1_score as _f1_score
-from sklearn.metrics import (log_loss, precision_score, recall_score,
-                             roc_auc_score)
-
-from .utils import ravel, threshold, to_numpy
 
 
-@to_numpy
-@ravel
-@threshold(0.5)
-def accuracy(t: np.ndarray, p: np.ndarray, *args, **kwargs):
-    return accuracy_score(t, p, *args, **kwargs)
+def fraction(numerator, denominator, empty_val: float = 1):
+    assert numerator <= denominator, f"{numerator}, {denominator}"
+    return numerator / denominator if denominator != 0 else empty_val
 
 
-@to_numpy
-@ravel
-@threshold(0.5)
-def recall(t: np.ndarray, p: np.ndarray, *args, **kwargs):
-    return recall_score(t, p, *args, **kwargs)
+def dice_score(x: np.ndarray, y: np.ndarray) -> float:
+    return fraction(2 * np.sum(x & y), np.sum(x) + np.sum(y))
 
 
-@to_numpy
-@ravel
-@threshold(0.5)
-def precision(t: np.ndarray, p: np.ndarray, *args, **kwargs):
-    return precision_score(t, p, *args, **kwargs)
+def sensitivity(y_true, y_pred):
+    return fraction(np.sum(y_pred & y_true), np.sum(y_true))
 
 
-@to_numpy
-@ravel
-@threshold(0.5)
-def f1_score(t: np.ndarray, p: np.ndarray, *args, **kwargs):
-    return _f1_score(t, p, *args, **kwargs)
+def specificity(y_true, y_pred):
+    tn = np.sum((~y_true) & (~y_pred))
+    fp = np.sum(y_pred & (~y_true))
+    return fraction(tn, tn + fp, empty_val=0)
 
 
-@to_numpy
-@ravel
-def roc_auc(t: np.ndarray, p: np.ndarray, *args, **kwargs):
-    return roc_auc_score(t, p, *args, **kwargs)
+def recall(y_true, y_pred):
+    tp = np.count_nonzero(np.logical_and(y_pred, y_true))
+    fn = np.count_nonzero(np.logical_and(~y_pred, y_true))
+
+    return fraction(tp, tp + fn, 0)
 
 
-@to_numpy
-@ravel
-def binary_cross_entropy(t: np.ndarray, p: np.ndarray, *args, **kwargs):
-    return log_loss(t, p, *args, **kwargs)
+def precision(y_true, y_pred):
+    tp = np.count_nonzero(y_pred & y_true)
+    fp = np.count_nonzero(y_pred & ~y_true)
+
+    return fraction(tp, tp + fp, 0)
+
+
+def f1_score(y_true, y_pred):
+    pr = precision(y_true, y_pred)
+    rc = recall(y_true, y_pred)
+    return fraction(2 * pr * rc, pr + rc, 0)

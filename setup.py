@@ -19,7 +19,6 @@ setup(
     version=version,
     license="MIT",
     url="https://github.com/arseniybelkov/nekograd",
-    packages=["nekograd"],
     install_requires=requirements,
     long_description=long_description,
     long_description_content_type="text/markdown",

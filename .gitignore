@@ -1,3 +1,5 @@
+lightning_logs
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -124,9 +126,11 @@ celerybeat.pid
 .venv
 env/
 venv/
+test_venv/
 ENV/
 env.bak/
 venv.bak/
+tests/MNIST/
 
 # Spyder project settings
 .spyderproject
