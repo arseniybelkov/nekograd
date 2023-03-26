@@ -74,15 +74,15 @@ class CoreModel(BaseModel):
         return to_np(self.activation(self(x)))
 
     def on_train_epoch_end(self) -> None:
-        self.on_epoch_end(self.training_step_outputs, "train")
+        self.log_metrics_on_epoch_end(self.training_step_outputs, "train")
 
     def on_validation_epoch_end(self) -> None:
-        self.on_epoch_end(self.validation_step_outputs, "val")
+        self.log_metrics_on_epoch_end(self.validation_step_outputs, "val")
 
     def on_test_epoch_end(self) -> None:
-        self.on_epoch_end(self.test_step_outputs, "test")
+        self.log_metrics_on_epoch_end(self.test_step_outputs, "test")
 
-    def on_epoch_end(self, outputs: EPOCH_OUTPUT, prefix: str = "") -> Dict[str, float]:
+    def log_metrics_on_epoch_end(self, outputs: EPOCH_OUTPUT, prefix: str = "") -> Dict[str, float]:
         if prefix:
             prefix += "/"
         logs = {}

@@ -28,7 +28,7 @@ class CriterionDict(torch.nn.Module):
         alphas: Union[float, List[float], None] = None,
         loss_keys: Union[str, List[str], None] = None,
         scale: bool = False,
-    ) -> object:
+    ) -> None:
         super().__init__()
         # If alphas is None -> all losses coeffs sum up to 1
         alphas = [1 / len(criterions)] * len(criterions) if alphas is None else alphas

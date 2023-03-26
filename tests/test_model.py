@@ -10,7 +10,7 @@ from nekograd.metrics.utils import argmax
 from nekograd.model import CoreModel
 
 
-def test(mnist_datamodule):
+def test_core_model(mnist_datamodule):
     criterion = torch.nn.CrossEntropyLoss()
     conv_block = lambda c_in, c_out: nn.Sequential(
         nn.Conv2d(c_in, c_out, 3), nn.BatchNorm2d(c_out), nn.ReLU()
@@ -40,6 +40,7 @@ def test(mnist_datamodule):
             }
 
             return [optimizer], [lr_scheduler]
+
 
     model = Model(
         architecture=architecture,
