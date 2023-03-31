@@ -96,8 +96,8 @@ class CoreModel(BaseModel):
         if prefix:
             prefix += "/"
         logs = {}
-        for k in outputs[0].keys():
-            logs.update({prefix + k: np.stack([to_np(o[k]) for o in outputs])})
-        logs = {k: np.mean(log) for k, log in logs.items()}
+        for k in filter(lambda s: not s.startswith("_"), outputs[0].keys()):
+            logs.update({prefix + k: np.stack([to_np(o[k]) * o["_batch_size"] for o in outputs])})
+        logs = {k: sum(log) / sum(o["_batch_size"] for o in outputs) for k, log in logs.items()}
         self.log_dict(logs, prog_bar=True, on_epoch=True)
         return logs

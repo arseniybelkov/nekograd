@@ -19,7 +19,7 @@ class BaseModel(pl.LightningModule, metaclass=ABCMeta):
         self.test_step_outputs = []
 
     def on_before_batch_transfer(
-        self, batch: Tuple[np.ndarray, ...], dataloader_idx: int
+            self, batch: Tuple[np.ndarray, ...], dataloader_idx: int
     ) -> Tuple[torch.Tensor, ...]:
         return tuple(map(np2tensor, batch))
 
@@ -33,27 +33,30 @@ class BaseModel(pl.LightningModule, metaclass=ABCMeta):
         self.test_step_outputs.clear()
 
     def on_train_batch_end(
-        self,
-        outputs: Dict[str, torch.Tensor],
-        batch: Tuple[torch.Tensor, ...],
-        batch_idx: int,
+            self,
+            outputs: Dict[str, torch.Tensor],
+            batch: Tuple[torch.Tensor, ...],
+            batch_idx: int,
     ) -> None:
+        outputs["_batch_size"] = batch[0].shape[0]
         self.training_step_outputs.append(outputs)
 
     def on_validation_batch_end(
-        self,
-        outputs: STEP_OUTPUT,
-        batch: Tuple[torch.Tensor, ...],
-        batch_idx: int,
-        dataloader_idx: int = 0,
+            self,
+            outputs: STEP_OUTPUT,
+            batch: Tuple[torch.Tensor, ...],
+            batch_idx: int,
+            dataloader_idx: int = 0,
     ) -> None:
+        outputs["_batch_size"] = batch[0].shape[0]
         self.validation_step_outputs.append(outputs)
 
     def on_test_batch_end(
-        self,
-        outputs: STEP_OUTPUT,
-        batch: Tuple[torch.Tensor, ...],
-        batch_idx: int,
-        dataloader_idx: int = 0,
+            self,
+            outputs: STEP_OUTPUT,
+            batch: Tuple[torch.Tensor, ...],
+            batch_idx: int,
+            dataloader_idx: int = 0,
     ) -> None:
+        outputs["_batch_size"] = batch[0].shape[0]
         self.test_step_outputs.append(outputs)
