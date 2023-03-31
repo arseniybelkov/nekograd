@@ -1,5 +1,5 @@
 import os
-
+import pytest
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
@@ -10,12 +10,12 @@ from nekograd.metrics.utils import argmax
 from nekograd.model import CoreModel
 
 
-def test_core_model(mnist_datamodule):
-    criterion = torch.nn.CrossEntropyLoss()
+@pytest.fixture
+def architecture():
     conv_block = lambda c_in, c_out: nn.Sequential(
         nn.Conv2d(c_in, c_out, 3), nn.BatchNorm2d(c_out), nn.ReLU()
     )
-    architecture = nn.Sequential(
+    return nn.Sequential(
         conv_block(1, 16),
         conv_block(16, 32),
         nn.MaxPool2d(2, 2),
@@ -26,6 +26,9 @@ def test_core_model(mnist_datamodule):
         nn.Linear(16, 10),
     )
 
+
+def test_core_model(mnist_datamodule, architecture):
+    criterion = torch.nn.CrossEntropyLoss()
     metrics = {"accuracy": argmax(1)(accuracy_score)}
 
     class Model(CoreModel):
@@ -41,12 +44,43 @@ def test_core_model(mnist_datamodule):
 
             return [optimizer], [lr_scheduler]
 
-
     model = Model(
         architecture=architecture,
         criterion=criterion,
         activation=nn.Softmax(1),
         metrics=metrics,
+    )
+
+    device = "gpu" if torch.cuda.is_available() else "cpu"
+    print(device)
+
+    trainer = pl.Trainer(
+        accelerator=device,
+        max_epochs=5,
+        logger=TensorBoardLogger(
+            save_dir=os.getcwd(), version="test_model", name="lightning_logs"
+        ),
+    )
+
+    trainer.fit(model, datamodule=mnist_datamodule)
+    test_metrics = trainer.test(model, datamodule=mnist_datamodule)[0]
+
+    assert all(map(lambda v: v > 0.9, test_metrics.values()))
+
+
+def test_optimizer_init(mnist_datamodule, architecture):
+    criterion = torch.nn.CrossEntropyLoss()
+    metrics = {"accuracy": argmax(1)(accuracy_score)}
+
+    optimizer = torch.optim.Adam(architecture.parameters(), lr=1e-3)
+
+    model = CoreModel(
+        architecture=architecture,
+        criterion=criterion,
+        activation=nn.Softmax(1),
+        metrics=metrics,
+        optimizer=optimizer,
+        lr_scheduler=torch.optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 1)
     )
 
     device = "gpu" if torch.cuda.is_available() else "cpu"

@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Dict, Sequence, Any, List
+from typing import Dict, Sequence, Any, List, Union
 
 import numpy as np
 import torch
@@ -35,3 +35,9 @@ def to_np(x):
         return tensor_sequence2np(x)
     else:
         return np.asarray(x)
+
+
+def np2tensor(x: Union[torch.Tensor, np.ndarray]) -> torch.Tensor:
+    if isinstance(x, torch.Tensor):
+        return x
+    return torch.from_numpy(np.asarray(x))

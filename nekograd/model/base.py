@@ -5,6 +5,8 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 
+from ..torch.utils import np2tensor
+
 STEP_OUTPUT = Dict[str, Union[np.ndarray, float]]
 EPOCH_OUTPUT = List[STEP_OUTPUT]
 
@@ -15,6 +17,11 @@ class BaseModel(pl.LightningModule, metaclass=ABCMeta):
         self.training_step_outputs = []
         self.validation_step_outputs = []
         self.test_step_outputs = []
+
+    def on_before_batch_transfer(
+        self, batch: Tuple[np.ndarray, ...], dataloader_idx: int
+    ) -> Tuple[torch.Tensor, ...]:
+        return tuple(map(np2tensor, batch))
 
     def on_train_epoch_start(self) -> None:
         self.training_step_outputs.clear()

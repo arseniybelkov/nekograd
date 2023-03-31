@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple, Union
 
 import numpy as np
 import torch
@@ -18,6 +18,8 @@ class CoreModel(BaseModel):
         criterion: Callable,
         metrics: Dict[str, Callable],
         activation: Callable = nn.Identity(),
+        optimizer: Union[Optimizer, None] = None,
+        lr_scheduler: Union[_LRScheduler, None] = None,
         n_targets: int = 1,
     ):
         super().__init__()
@@ -25,19 +27,25 @@ class CoreModel(BaseModel):
         self.metrics = metrics
         self.criterion = criterion
         self.activation = activation
+        self.optimizer = optimizer
+        self.lr_scheduler = lr_scheduler
         if n_targets < 1:
             raise ValueError(f"Expected n_targets to be at least 1, got {n_targets}")
         self._nt = n_targets
 
     def configure_optimizers(self) -> Tuple[List[Optimizer], List[_LRScheduler]]:
-        optimizer = torch.optim.Adam(self.parameters(), 1e-4)
-        lr_scheduler = {
-            "scheduler": torch.optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 1),
+        if self.optimizer is None or self.lr_scheduler is None:
+            raise NotImplementedError(
+                "If you do not pass optimizer and lr_scheduler to __init__ method, "
+                "you must specify "
+                "configure_optimizers method"
+            )
+        self.lr_scheduler = {
+            "scheduler": self.lr_scheduler,
             "name": "lr_scheduler",
             "interval": "epoch",
         }
-
-        return [optimizer], [lr_scheduler]
+        return [self.optimizer], [self.lr_scheduler]
 
     def forward(self, *xs: torch.Tensor) -> torch.Tensor:
         return self.architecture(*xs)
@@ -68,7 +76,7 @@ class CoreModel(BaseModel):
     def predict_step(
         self, batch: Tuple[torch.Tensor, ...], batch_idx: int, **kwargs
     ) -> STEP_OUTPUT:
-        return self.inference_step(batch[0])
+        raise NotImplementedError("Currently in development")
 
     def inference_step(self, x: torch.Tensor) -> np.ndarray:
         return to_np(self.activation(self(x)))
@@ -82,7 +90,9 @@ class CoreModel(BaseModel):
     def on_test_epoch_end(self) -> None:
         self.log_metrics_on_epoch_end(self.test_step_outputs, "test")
 
-    def log_metrics_on_epoch_end(self, outputs: EPOCH_OUTPUT, prefix: str = "") -> Dict[str, float]:
+    def log_metrics_on_epoch_end(
+        self, outputs: EPOCH_OUTPUT, prefix: str = ""
+    ) -> Dict[str, float]:
         if prefix:
             prefix += "/"
         logs = {}
