@@ -96,5 +96,5 @@ def test_optimizer_init(mnist_datamodule, architecture):
 
     trainer.fit(model, datamodule=mnist_datamodule)
     test_metrics = trainer.test(model, datamodule=mnist_datamodule)[0]
-
     assert all(map(lambda v: v > 0.9, test_metrics.values()))
+    assert all(map(lambda v: v <= 1, test_metrics.values()))
