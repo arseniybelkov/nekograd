@@ -4,8 +4,7 @@ from typing import Callable, Sequence, Union
 import numpy as np
 from torch import Tensor
 
-from ..torch.utils import to_np
-
+from ..torch.utils import to_np, np2tensor
 
 ArrayLike = Union[np.ndarray, Tensor]
 
@@ -79,7 +78,7 @@ def batched(aggregate: Callable = np.mean):
     def decorator(metric):
         @wraps(metric)
         def wrapper(
-            ts: Sequence[np.ndarray], ps: Sequence[np.ndarray], *args, **kwargs
+                ts: Sequence[np.ndarray], ps: Sequence[np.ndarray], *args, **kwargs
         ):
             return aggregate([metric(t, p, *args, **kwargs) for t, p in zip(ts, ps)])
 
@@ -92,8 +91,16 @@ def argmax(axis: int = 0):
     def decorator(metric):
         @wraps(metric)
         def wrapper(t: np.ndarray, p: np.ndarray, *args, **kwargs):
-            return metric(t, p.argmax(axis), *args, **kwargs)
+            return metric(t, np.argmax(p, axis), *args, **kwargs)
 
         return wrapper
 
     return decorator
+
+
+def to_tensor(metric):
+    @wraps(metric)
+    def wrapper(t: np.ndarray, p: np.ndarray, *args, **kwargs):
+        return metric(np2tensor(t), np2tensor(p), *args, **kwargs)
+
+    return wrapper

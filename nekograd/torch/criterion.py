@@ -3,6 +3,7 @@ from typing import Callable, Dict, List, Union
 
 import torch
 from cytoolz.functoolz import juxt
+from more_itertools import zip_equal
 
 
 class CriterionDict(torch.nn.Module):
@@ -71,7 +72,7 @@ class CriterionDict(torch.nn.Module):
 
     def forward(self, *args, **kwargs) -> Dict[str, torch.Tensor]:
         loss = {"loss": 0}
-        for _loss, alpha, loss_key in zip(
+        for _loss, alpha, loss_key in zip_equal(
             juxt(self.criterions)(*args, **kwargs), self.alphas, self.loss_keys
         ):
             if isinstance(_loss, (int, float)):
