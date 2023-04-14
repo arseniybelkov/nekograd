@@ -26,8 +26,8 @@ def test_multiply():
 
 def test_switch():
     lr = 2
-    multiply_policy = Switch(lambda i: np.cos(i / np.pi), lr_init=lr)
-    lrs = [multiply_policy(epoch) * lr for epoch in range(5)]
+    switch_policy = Switch(lambda i: np.cos(i / np.pi), lr_init=lr)
+    lrs = [switch_policy(epoch) * lr for epoch in range(5)]
     assert np.allclose(lrs, [np.cos(i / np.pi) for i in range(5)])
 
     f = nn.Linear(2, 2)
