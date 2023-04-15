@@ -13,21 +13,21 @@ def test_classification():
     x = np.asarray([0, 1, 1], dtype=bool)
     y = np.asarray([1, 0, 1], dtype=bool)
 
-    assert np.allclose(accuracy(x, y), accuracy_score(x, y))
-    assert np.allclose(recall(x, y), recall_score(x, y))
-    assert np.allclose(precision(x, y), precision_score(x, y))
-    assert np.allclose(f1_score(x, y), f1_score_skl(x, y))
+    assert np.allclose(accuracy(y, x), accuracy_score(y, x))
+    assert np.allclose(recall(y, x), recall_score(y, x))
+    assert np.allclose(precision(y, x), precision_score(y, x))
+    assert np.allclose(f1_score(y, x), f1_score_skl(y, x))
 
 
 def test_segmentation():
     x = np.random.randn(5, 5) > 0
     y = np.random.randn(5, 5) > 0
 
-    assert np.allclose(accuracy(x, y), ravel(accuracy_score)(x, y))
-    assert np.allclose(recall(x, y), ravel(recall_score)(x, y))
-    assert np.allclose(precision(x, y), ravel(precision_score)(x, y))
-    assert np.allclose(f1_score(x, y), ravel(f1_score_skl)(x, y))
-    assert np.allclose(dice_score(x, y), ravel(f1_score_skl)(x, y))
+    assert np.allclose(accuracy(y, x), ravel(accuracy_score)(y, x))
+    assert np.allclose(recall(y, x), ravel(recall_score)(y, x))
+    assert np.allclose(precision(y, x), ravel(precision_score)(y, x))
+    assert np.allclose(f1_score(y, x), ravel(f1_score_skl)(y, x))
+    assert np.allclose(dice_score(y, x), ravel(f1_score_skl)(y, x))
 
 
 def test_aggregated_metrics():
@@ -40,10 +40,10 @@ def test_aggregated_metrics():
     agg_f1_score = convert_to_aggregated(f1_score)
     agg_dice_score = convert_to_aggregated(dice_score)
 
-    aggregate = lambda ys, xs, m: np.mean([m(x, y) for y, x in zip_equal(y, x)])
+    aggregate = lambda ys, xs, m: np.mean([m(y, x) for y, x in zip_equal(ys, xs)])
 
-    assert np.allclose(agg_accuracy(x, y), aggregate(x, y, ravel(accuracy_score)))
-    assert np.allclose(agg_recall(x, y), aggregate(x, y, ravel(recall_score)))
-    assert np.allclose(agg_precision(x, y), aggregate(x, y, ravel(precision_score)))
-    assert np.allclose(agg_f1_score(x, y), aggregate(x, y, ravel(f1_score_skl)))
-    assert np.allclose(agg_dice_score(x, y), aggregate(x, y, ravel(f1_score_skl)))
+    assert np.allclose(agg_accuracy(y, x), aggregate(y, x, ravel(accuracy_score)))
+    assert np.allclose(agg_recall(y, x), aggregate(y, x, ravel(recall_score)))
+    assert np.allclose(agg_precision(y, x), aggregate(y, x, ravel(precision_score)))
+    assert np.allclose(agg_f1_score(y, x), aggregate(y, x, ravel(f1_score_skl)))
+    assert np.allclose(agg_dice_score(y, x), aggregate(y, x, ravel(f1_score_skl)))
