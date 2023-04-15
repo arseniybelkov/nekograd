@@ -6,3 +6,4 @@ torch
 pytorch-lightning
 tensorboardX
 cytoolz
+more-itertools
