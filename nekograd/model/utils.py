@@ -2,8 +2,6 @@ from functools import wraps
 from typing import Callable, Dict
 
 import torch
-from cytoolz import compose
-from more_itertools import collapse
 
 
 def criterion_wrapper(loss_key: str = "loss"):
