@@ -1,110 +1,142 @@
-import math
-from typing import List, Sequence
+from typing import Sequence, Union, Tuple, Hashable, Any
 
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from cytoolz import get
+from sklearn.model_selection import StratifiedKFold, train_test_split, KFold
 
 
 def train_val_test_split(
-    ids: Sequence, qval: float = 0.05, qtest: float = 0.1, random_state=42
-) -> List[List]:
-    if qval + qtest >= 1:
-        raise ValueError(f"No instances for train fold, {qval=}, {qtest=}")
-    tr, test_val = train_test_split(
-        ids, test_size=qval + qtest, random_state=random_state
-    )
-    return [
-        tr,
-        *train_test_split(
-            test_val, test_size=qtest / (qval + qtest), random_state=random_state
-        ),
-    ]
-
-
-def stratified_k_fold(
     ids: Sequence,
-    target: Sequence,
+    val_size: Union[int, float],
+    test_size: Union[int, float],
+    stratify: Union[Sequence, None] = None,
+    shuffle: bool = True,
+    random_state: Any = 42,
+) -> Tuple[Tuple[Hashable, ...], ...]:
+
+    kwargs = dict(
+        test_size=test_size,
+        shuffle=shuffle,
+        random_state=random_state,
+        stratify=stratify,
+    )
+
+    if stratify is None:
+        train_val, test = train_test_split(ids, **kwargs)
+        train_val_stratify = None
+    else:
+        train_val, train_val_stratify, test, _ = train_test_split(ids, **kwargs)
+
+    train, val = train_test_split(
+        train_val,
+        test_size=val_size,
+        shuffle=shuffle,
+        stratify=train_val_stratify,
+        random_state=random_state,
+    )
+
+    return tuple(map(tuple, (train, val, test)))
+
+
+def k_fold(
+    ids: Sequence,
+    val_size: Union[int, float],
     n_splits: int = 3,
-    qval: float = 0.2,
-    random_state=42,
-) -> List[List[List]]:
+    stratify: Union[Sequence, None] = None,
+    shuffle: bool = True,
+    random_state: Any = 42,
+) -> Tuple[Tuple[Tuple[Hashable, ...], ...], ...]:
     """
     Stratified K-Fold Cross-Validation
     Parameters
     ----------
     ids : Sequence
         Sequence of dataset instances identifiers.
-    target : Sequence
-        Sequence of target values.
+    val_size : float or int
+        Part (or number if int) of ids to be used as validation
+    stratify : Sequence or None
+        If not None, should be sequence of values for stratifiction.
+    shuffle : bool
+        Whether to shuffle ids, default = True.
     n_splits : int
         Number of cross-validation folds
-    qval : float
-        Part of data to be moved to validation sets (must be 0 < qtest < 1)
     random_state
 
     Returns
     -------
-    split : List[List[List]]
+    split : Tuple
         n_splits of train, validation, test splits
-        [..., [train_i, val_i, test_i], ...].
+        (..., (train_i, val_i, test_i), ...).
+        Union of all test_i == ids
     """
-    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+    k_fold_class = KFold if stratify is None else StratifiedKFold
+
+    kf = k_fold_class(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
     split = []
-    for train_val, test in skf.split(ids, target):
-        train_val_skf = StratifiedKFold(round(1 / qval))
-        _target = [target[i] for i in train_val]
-        _train, _val = next(train_val_skf.split(train_val, _target))
-        train = [train_val[i] for i in _train]
-        val = [train_val[i] for i in _val]
-        split.append(
-            [[ids[i] for i in train], [ids[i] for i in val], [ids[i] for i in test]]
+    for train_val, test in kf.split(ids, stratify):
+        _stratify = get(train_val, stratify)
+        train, val = train_test_split(
+            get(train_val, ids),
+            test_size=val_size,
+            stratify=_stratify,
+            shuffle=shuffle,
+            random_state=random_state,
         )
+        split.append((tuple(train), tuple(val), tuple(test)))
 
-    return split
+    return tuple(split)
 
 
-def stratified_k_fold_single_test(
+def k_fold_single_test(
     ids: Sequence,
-    target: Sequence,
+    test_size: Union[int, float],
+    stratify: Union[Sequence, None] = None,
     n_splits: int = 3,
-    qtest: float = 0.2,
-    random_state=42,
-) -> List[List[List]]:
+    shuffle: bool = True,
+    random_state: Any = 42,
+) -> Tuple[Tuple[Tuple[Hashable, ...], ...], ...]:
     """
     Stratified K-Fold Cross-Validation with single test
     Parameters
     ----------
     ids : Sequence
         Sequence of dataset instances identifiers.
-    target : Sequence
-        Sequence of target values.
-    qtest : float
-        Part of data to be moved to test set (must be 0 < qtest < 1)
+    test_size : float or int
+        Part (or number if int) of ids to be used as test.
+    stratify : Sequence or None
+        If not None, should be sequence of values for stratifiction.
+    shuffle : bool
+        Whether to shuffle ids, default = True
     n_splits : int
         Number of cross-validation folds
     random_state
 
     Returns
     -------
-    split : List[List[List]]
-        n_splits of cross-validation folds with single test for them
-        [..., [train_i, val_i, test], ...].
+    split : Tuple
+        n_splits of train, validation, test splits
+        (..., (train_i, val_i, test), ...).
+        Test is the same for all folds
     """
-    if not 0 < qtest < 1:
-        raise ValueError(f"Expected qtest to be in range (0, 1), got {qtest}")
-    qtest = round(1 / qtest)
-    _ids, _test = next(
-        StratifiedKFold(qtest, shuffle=True, random_state=random_state).split(
-            ids, target
-        )
+
+    k_fold_class = KFold if stratify is None else StratifiedKFold
+    kwargs = dict(
+        test_size=test_size,
+        shuffle=shuffle,
+        random_state=random_state,
+        stratify=stratify,
     )
 
-    ids = [ids[i] for i in _ids]
-    target = [target[i] for i in _ids]
-    test = [ids[i] for i in _test]
+    if stratify is None:
+        train_val, test = train_test_split(ids, **kwargs)
+        train_val_stratify = None
+    else:
+        train_val, train_val_stratify, test, _ = train_test_split(ids, **kwargs)
 
+    kf = k_fold_class(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
     split = []
-    for train, val in StratifiedKFold(
-        n_splits, shuffle=True, random_state=random_state
-    ).split(ids, target):
-        split.append([[ids[i] for i in train], [ids[i] for i in val], test])
-    return split
+    for train, val in kf.split(train_val, train_val_stratify):
+        split.append(
+            (tuple(get(train, train_val)), tuple(get(val, train_val)), tuple(test))
+        )
+
+    return tuple(split)
