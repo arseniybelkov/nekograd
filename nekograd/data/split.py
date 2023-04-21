@@ -3,6 +3,8 @@ from typing import Sequence, Union, Tuple, Hashable, Any
 from cytoolz import get
 from sklearn.model_selection import StratifiedKFold, train_test_split, KFold
 
+__all__ = ["train_val_test_split", "k_fold", "k_fold_single_test"]
+
 
 def train_val_test_split(
     ids: Sequence,
@@ -12,7 +14,6 @@ def train_val_test_split(
     shuffle: bool = True,
     random_state: Any = 42,
 ) -> Tuple[Tuple[Hashable, ...], ...]:
-
     kwargs = dict(
         test_size=test_size,
         shuffle=shuffle,
@@ -24,7 +25,9 @@ def train_val_test_split(
         train_val, test = train_test_split(ids, **kwargs)
         train_val_stratify = None
     else:
-        train_val, train_val_stratify, test, _ = train_test_split(ids, **kwargs)
+        train_val, train_val_stratify, test, _ = train_test_split(
+            ids, stratify, **kwargs
+        )
 
     train, val = train_test_split(
         train_val,
@@ -73,15 +76,15 @@ def k_fold(
     kf = k_fold_class(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
     split = []
     for train_val, test in kf.split(ids, stratify):
-        _stratify = get(train_val, stratify)
+        _stratify = extract(train_val, stratify) if stratify is not None else None
         train, val = train_test_split(
-            get(train_val, ids),
+            extract(train_val, ids),
             test_size=val_size,
             stratify=_stratify,
             shuffle=shuffle,
             random_state=random_state,
         )
-        split.append((tuple(train), tuple(val), tuple(test)))
+        split.append((tuple(train), tuple(val), extract(test, ids)))
 
     return tuple(split)
 
@@ -89,8 +92,8 @@ def k_fold(
 def k_fold_single_test(
     ids: Sequence,
     test_size: Union[int, float],
-    stratify: Union[Sequence, None] = None,
     n_splits: int = 3,
+    stratify: Union[Sequence, None] = None,
     shuffle: bool = True,
     random_state: Any = 42,
 ) -> Tuple[Tuple[Tuple[Hashable, ...], ...], ...]:
@@ -130,13 +133,17 @@ def k_fold_single_test(
         train_val, test = train_test_split(ids, **kwargs)
         train_val_stratify = None
     else:
-        train_val, train_val_stratify, test, _ = train_test_split(ids, **kwargs)
+        train_val, train_val_stratify, test, _ = train_test_split(
+            ids, stratify, **kwargs
+        )
 
     kf = k_fold_class(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
     split = []
     for train, val in kf.split(train_val, train_val_stratify):
-        split.append(
-            (tuple(get(train, train_val)), tuple(get(val, train_val)), tuple(test))
-        )
+        split.append((extract(train, train_val), extract(val, train_val), tuple(test)))
 
     return tuple(split)
+
+
+def extract(ids, sequence) -> Tuple:
+    return tuple(get(list(ids), sequence))
