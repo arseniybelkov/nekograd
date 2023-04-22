@@ -1,31 +1,30 @@
 from functools import partial
-from itertools import chain
 from typing import Callable, Dict, List, Tuple, Union
 
 import numpy as np
 import torch
 import torch.nn as nn
 from cytoolz import compose, keymap
-from more_itertools import unzip, collapse
+from more_itertools import collapse, unzip
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
-from .base import BaseModel, STEP_OUTPUT, EPOCH_OUTPUT
+from ..torch.utils import to_np
+from .base import EPOCH_OUTPUT, STEP_OUTPUT, BaseModel
 from .commands import compute_metrics
 from .utils import criterion_wrapper
-from ..torch.utils import to_np
 
 
 class CoreModel(BaseModel):
     def __init__(
-            self,
-            architecture: nn.Module,
-            criterion: Callable,
-            metrics: Dict[str, Callable],
-            activation: Callable = nn.Identity(),
-            optimizer: Union[Optimizer, None] = None,
-            lr_scheduler: Union[_LRScheduler, None] = None,
-            n_targets: int = 1,
+        self,
+        architecture: nn.Module,
+        criterion: Callable,
+        metrics: Dict[str, Callable],
+        activation: Callable = nn.Identity(),
+        optimizer: Union[Optimizer, None] = None,
+        lr_scheduler: Union[_LRScheduler, None] = None,
+        n_targets: int = 1,
     ):
         super().__init__()
         self.architecture = architecture
@@ -57,13 +56,13 @@ class CoreModel(BaseModel):
         return self.architecture(*xs)
 
     def training_step(
-            self, batch: Tuple[torch.Tensor, ...], batch_idx: int
+        self, batch: Tuple[torch.Tensor, ...], batch_idx: int
     ) -> Dict[str, torch.Tensor]:
-        x, y = batch[: -self._nt], batch[-self._nt:]
+        x, y = batch[: -self._nt], batch[-self._nt :]
         return self.wrapped_criterion(self(*x), *y)
 
     def validation_step(
-            self, batch: Tuple[torch.Tensor, ...], batch_idx: int
+        self, batch: Tuple[torch.Tensor, ...], batch_idx: int
     ) -> STEP_OUTPUT:
         return self.inference_step(batch[0]), to_np(batch[1])
 
@@ -72,7 +71,7 @@ class CoreModel(BaseModel):
 
     # TODO
     def predict_step(
-            self, batch: Tuple[torch.Tensor, ...], batch_idx: int, **kwargs
+        self, batch: Tuple[torch.Tensor, ...], batch_idx: int, **kwargs
     ) -> STEP_OUTPUT:
         raise NotImplementedError("Currently in development")
 
@@ -89,7 +88,7 @@ class CoreModel(BaseModel):
         self.log_metrics_on_epoch_end(self.test_step_outputs, "test")
 
     def log_metrics_on_epoch_end(
-            self, outputs: EPOCH_OUTPUT, prefix: str = ""
+        self, outputs: EPOCH_OUTPUT, prefix: str = ""
     ) -> Dict[str, Union[np.ndarray, float]]:
         if prefix:
             prefix += "/"
@@ -102,8 +101,10 @@ class CoreModel(BaseModel):
             x, y = map(compose(list, partial(collapse, levels=1)), unzip(outputs))
             logs = compute_metrics(y, x, self.metrics)
         else:
-            raise TypeError(f"Unknown type of outputs: {type(outputs[0])}, "
-                            "expected Union[dict, list, tuple]")
+            raise TypeError(
+                f"Unknown type of outputs: {type(outputs[0])}, "
+                "expected Union[dict, list, tuple]"
+            )
 
         logs = keymap(lambda k: prefix + k, logs)
         self.log_dict(logs, prog_bar=True, on_epoch=True)

@@ -12,9 +12,13 @@ def criterion_wrapper(loss_key: str = "loss"):
             if isinstance(loss, torch.Tensor):
                 return {loss_key: loss}
             elif isinstance(loss, dict):
-                return loss if loss_key in loss else {loss_key: sum(loss.values()), **loss}
+                return (
+                    loss if loss_key in loss else {loss_key: sum(loss.values()), **loss}
+                )
             else:
-                raise ValueError(f"Expected `loss` to be dict or tensor, got {type(loss)}")
+                raise ValueError(
+                    f"Expected `loss` to be dict or tensor, got {type(loss)}"
+                )
 
         return wrapper
 

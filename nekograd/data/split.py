@@ -1,7 +1,7 @@
-from typing import Sequence, Union, Tuple, Hashable, Any
+from typing import Any, Hashable, Sequence, Tuple, Union
 
 from cytoolz import get
-from sklearn.model_selection import StratifiedKFold, train_test_split, KFold
+from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 
 __all__ = ["train_val_test_split", "k_fold", "k_fold_single_test"]
 

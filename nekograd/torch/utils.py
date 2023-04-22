@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Dict, Sequence, Any, List, Union
+from typing import Any, Dict, List, Sequence, Union
 
 import numpy as np
 import torch
