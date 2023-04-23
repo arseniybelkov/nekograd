@@ -1,8 +1,8 @@
+from functools import wraps
 from pathlib import Path
-from typing import Callable, Dict, Union, Sequence
+from typing import Callable, Dict, Sequence, Union
 
 import numpy as np
-from functools import wraps
 import pytorch_lightning as pl
 from more_itertools import zip_equal
 

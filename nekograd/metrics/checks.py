@@ -10,7 +10,9 @@ def check_type(_type: type):
         def wrapper(*args: np.ndarray):
             for i, arr in enumerate(args):
                 if arr.dtype != _type:
-                    raise ValueError(f"Argument #{i + 1} is of type {arr.dtype}, expected {_type}")
+                    raise ValueError(
+                        f"Argument #{i + 1} is of type {arr.dtype}, expected {_type}"
+                    )
             return metric(*args)
 
         return wrapper

@@ -4,7 +4,7 @@ from typing import Callable, Sequence, Union
 import numpy as np
 from torch import Tensor
 
-from ..torch.utils import to_np, np2tensor
+from ..torch.utils import np2tensor, to_np
 
 ArrayLike = Union[np.ndarray, Tensor]
 
@@ -78,7 +78,7 @@ def batched(aggregate: Callable = np.mean):
     def decorator(metric):
         @wraps(metric)
         def wrapper(
-                ts: Sequence[np.ndarray], ps: Sequence[np.ndarray], *args, **kwargs
+            ts: Sequence[np.ndarray], ps: Sequence[np.ndarray], *args, **kwargs
         ):
             return aggregate([metric(t, p, *args, **kwargs) for t, p in zip(ts, ps)])
 
