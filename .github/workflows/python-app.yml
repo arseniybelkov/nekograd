@@ -30,7 +30,6 @@ jobs:
 
     - name: Check code style
       run: |
-        flake8 .
         isort --check .
         black --check .  
 

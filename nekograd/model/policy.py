@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Callable
+from typing import Callable, Dict
 
 
 class Policy(ABC):
@@ -41,6 +41,7 @@ class Switch(Policy):
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_policy)
     On i-th epoch lr_i = cos(i / np.pi)
     """
+
     def __init__(self, epoch2lr: Callable[[int], float], lr_init: float):
         super().__init__()
         if lr_init == 0:
