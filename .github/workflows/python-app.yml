@@ -38,10 +38,11 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest --cov --cov-report=xml --cov-branch
+        pytest tests --cov --cov-report=xml --cov-branch
 
     - name: Upload coverage results
       uses: codecov/codecov-action@v3
       with:
+        files: coverage.xml
         fail_ci_if_error: true
         verbose: true
