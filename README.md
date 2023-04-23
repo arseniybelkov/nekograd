@@ -1,5 +1,11 @@
+[![codecov](https://codecov.io/gh/arseniybelkov/nekograd/branch/master/graph/badge.svg?token=J49UF83POB)](https://codecov.io/gh/arseniybelkov/nekograd)
 # nekograd
-_Fast & Flexible_ ~~(just like a catgirl)~~ deep learning framework. 
+_Fast & Flexible_ ~~(just like a catgirl)~~ deep learning framework.
+  
+All frameworks require vast manuscripts of code written in order to
+create the simplest trainable model configuration.
+We propose `nekograd` as a convinient way of creating such pipelines
+with the least amount of code needed to be written.
 ```bash
 pip install nekograd
 ```
