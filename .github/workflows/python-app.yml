@@ -33,6 +33,8 @@ jobs:
 
     - name: Check code style
       run: |
+        autoflake --remove-all-unused-imports \
+          --ignore-init-module-imports -с -r nekograd
         isort --check $MODULE_NAME
         black --check $MODULE_NAME
 
