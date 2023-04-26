@@ -2,15 +2,24 @@
 # nekograd
 _Fast & Flexible_ ~~(just like a catgirl)~~ deep learning framework.
   
-All frameworks require vast manuscripts of code written in order to
+All frameworks require vast manuscripts of code to be written in order to
 create the simplest trainable model configuration.
-We propose `nekograd` as a convinient way of creating such pipelines
+We propose `nekograd` as a convenient way of creating such pipelines
 with the least amount of code needed to be written.
+## Installation
 ```bash
 pip install nekograd
 ```
+or
+```bash
+git clone https://github.com/arseniybelkov/nekograd.git
+cd nekograd && pip install -e .
+```
 
 ## Example
+
+`CoreModel` inherits everything from [__LightningModule__](https://lightning.ai/docs/pytorch/stable/common/lightning_module.html#)  
+and just implements it basic methods so you don't have to. 
 
 ```python
 import torch

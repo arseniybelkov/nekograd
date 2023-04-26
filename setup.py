@@ -1,8 +1,7 @@
 import runpy
 from pathlib import Path
 
-from setuptools import find_packages, setup
-
+from setuptools import setup
 
 with open("requirements.txt", encoding="utf-8") as file:
     requirements = file.read().splitlines()
