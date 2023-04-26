@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.optim import SGD
 from torch.optim.lr_scheduler import LambdaLR
 
-from nekograd.model.policy import Switch, Multiply
+from nekograd.model.policy import Multiply, Switch
 
 
 def test_multiply():
@@ -32,7 +32,9 @@ def test_switch():
 
     f = nn.Linear(2, 2)
     optimizer = SGD(f.parameters(), lr=lr)
-    scheduler = LambdaLR(optimizer, lr_lambda=Switch(lambda i: np.cos(i / np.pi), lr_init=lr))
+    scheduler = LambdaLR(
+        optimizer, lr_lambda=Switch(lambda i: np.cos(i / np.pi), lr_init=lr)
+    )
     lrs = []
     for _ in range(5):
         lrs.extend(scheduler.get_last_lr())

@@ -1,8 +1,11 @@
 import numpy as np
 from more_itertools import zip_equal
-from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score as f1_score_skl
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score as f1_score_skl
+from sklearn.metrics import precision_score, recall_score
 
-from nekograd.metrics.binary import accuracy, f1_score, dice_score, recall, precision
+from nekograd.metrics.binary import (accuracy, dice_score, f1_score, precision,
+                                     recall)
 from nekograd.metrics.utils import ravel
 from nekograd.model.commands import convert_to_aggregated
 

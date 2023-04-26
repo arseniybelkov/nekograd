@@ -7,7 +7,7 @@ import torch.nn as nn
 from pytorch_lightning.loggers import TensorBoardLogger
 from sklearn.metrics import accuracy_score
 
-from nekograd.metrics.binary import precision, dice_score, recall
+from nekograd.metrics.binary import dice_score, precision, recall
 from nekograd.metrics.utils import argmax
 from nekograd.model import CoreModel
 from nekograd.model.commands import convert_to_aggregated
@@ -83,7 +83,7 @@ def test_optimizer_init(mnist_datamodule, architecture):
         activation=nn.Softmax(1),
         metrics=metrics,
         optimizer=optimizer,
-        lr_scheduler=torch.optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 1)
+        lr_scheduler=torch.optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 1),
     )
 
     device = "gpu" if torch.cuda.is_available() else "cpu"
@@ -105,9 +105,11 @@ def test_optimizer_init(mnist_datamodule, architecture):
 
 def test_segmentation(mnist_datamodule):
     criterion = torch.nn.BCEWithLogitsLoss()
-    metrics = {"precision": convert_to_aggregated(lambda y, x: precision(y > 0.5, x > 0.5)),
-               "recall": convert_to_aggregated(lambda y, x: recall(y > 0.5, x > 0.5)),
-               "dice_score": convert_to_aggregated(lambda y, x: dice_score(y > 0.5, x > 0.5))}
+    metrics = {
+        "precision": convert_to_aggregated(lambda y, x: precision(y > 0.5, x > 0.5)),
+        "recall": convert_to_aggregated(lambda y, x: recall(y > 0.5, x > 0.5)),
+        "dice_score": convert_to_aggregated(lambda y, x: dice_score(y > 0.5, x > 0.5)),
+    }
 
     def conv_block(i, o, padding: int = 0, T: bool = False):
         conv = nn.Conv2d(i, o, kernel_size=3, padding=padding, bias=False)
@@ -115,11 +117,19 @@ def test_segmentation(mnist_datamodule):
             conv = nn.ConvTranspose2d(i, o, kernel_size=3, padding=padding, bias=False)
         return nn.Sequential(conv, nn.BatchNorm2d(o), nn.ReLU())
 
-    architecture = nn.Sequential(conv_block(1, 8, padding=1), conv_block(8, 16, padding=1), nn.MaxPool2d(2, 2),
-                                 conv_block(16, 32, padding=1), nn.MaxPool2d(2, 2),
-                                 conv_block(32, 32, padding=1),
-                                 nn.Upsample(scale_factor=2), conv_block(32, 16, padding=1, T=True),
-                                 nn.Upsample(scale_factor=2), conv_block(16, 8, padding=1, T=True), conv_block(8, 1, padding=1, T=True))
+    architecture = nn.Sequential(
+        conv_block(1, 8, padding=1),
+        conv_block(8, 16, padding=1),
+        nn.MaxPool2d(2, 2),
+        conv_block(16, 32, padding=1),
+        nn.MaxPool2d(2, 2),
+        conv_block(32, 32, padding=1),
+        nn.Upsample(scale_factor=2),
+        conv_block(32, 16, padding=1, T=True),
+        nn.Upsample(scale_factor=2),
+        conv_block(16, 8, padding=1, T=True),
+        conv_block(8, 1, padding=1, T=True),
+    )
 
     optimizer = torch.optim.Adam(architecture.parameters(), lr=1e-3)
 
@@ -134,7 +144,7 @@ def test_segmentation(mnist_datamodule):
         activation=nn.Sigmoid(),
         metrics=metrics,
         optimizer=optimizer,
-        lr_scheduler=torch.optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 1)
+        lr_scheduler=torch.optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 1),
     )
     device = "cpu"
     print(device)
