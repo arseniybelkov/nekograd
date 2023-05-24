@@ -1,4 +1,3 @@
-from functools import reduce
 from itertools import combinations
 from string import ascii_lowercase
 
@@ -6,6 +5,7 @@ import numpy as np
 from more_itertools import collapse
 
 from nekograd import k_fold, k_fold_single_test, train_val_test_split
+
 
 ids = tuple(ascii_lowercase)
 x = np.random.randn(len(ids))
@@ -19,12 +19,16 @@ def intersect(f1, f2):
 def test_train_val_test_split():
     split = train_val_test_split(ids, 0.2, 0.2)
     assert all(map(lambda i: type(i) == type(ids[0]), collapse(split)))
-    assert not reduce(lambda s1, s2: set(s1).intersection(s2), split)
+    assert not any(map(lambda s: set(s[0]).intersection(s[1]), combinations(split, 2)))
+
+    # test stratification
+    stratified_split = train_val_test_split(ids, 0.2, 0.2, stratify=y)
+    assert all(map(lambda i: type(i) == type(ids[0]), collapse(stratified_split)))
+    assert not any(map(lambda s: set(s[0]).intersection(s[1]), combinations(stratified_split, 2)))
 
 
 def test_k_fold():
     folds = k_fold(ids, 0.2, 3)
-
     assert len(folds) == 3
     assert all(map(lambda f: len(f) == 3, folds))
     assert isinstance(folds, tuple)
@@ -42,6 +46,9 @@ def test_k_fold():
     # Check completeness
     test_ids_union = folds[0][-1] + folds[1][-1] + folds[2][-1]
     assert sorted(test_ids_union) == sorted(ids)
+
+    # test stratification
+    folds = k_fold(ids, 0.2, 3, stratify=y)
 
 
 def test_k_fold_single_test():
