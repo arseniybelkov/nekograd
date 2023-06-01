@@ -19,8 +19,9 @@ class TimeProfiler(Callback):
         self._optional_keys = ("Avg Backward", "Avg Optimizer Step")
 
         allowed_keys = self._default_keys + self._optional_keys
-        if sorted(set(keys).intersection(allowed_keys)) != sorted(keys):
-            raise ValueError(f"TimeProfiler got unknown keys: {set(keys) - set(allowed_keys)}")
+        _keys = sorted(set(keys).intersection(allowed_keys))
+        if _keys != sorted(keys):
+            raise ValueError(f"TimeProfiler got unknown keys: {set(_keys) - set(keys)}")
 
         self.keys = sorted(set(keys).union(self._default_keys))
         self.time_stamps: Dict[str, List[datetime]] = {}
@@ -40,15 +41,14 @@ class TimeProfiler(Callback):
 
         deltas = {}
         for key, time_stamps in self.time_stamps.items():
-            deltas[key] = list(map(delta, windowed(time_stamps, 2)))
+            deltas[key] = list(map(delta, windowed(time_stamps, 2, step=2)))
             deltas[key] = sum(deltas[key]) / len(deltas[key])
 
         return deltas
-    
+
     def log_to_logger(self):
         deltas = self.compute_time_delta()
-        self.pl_module.log_dict(keymap(lambda k: f"{self.__class__.__name__}/" + k, deltas),
-                           on_step=False, on_epoch=True, prog_bar=False)
+        self.pl_module.log_dict(keymap(lambda k: f"{self.__class__.__name__}/" + k, deltas), prog_bar=False)
         self.time_stamps.clear()
 
     def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
