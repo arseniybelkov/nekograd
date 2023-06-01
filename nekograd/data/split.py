@@ -1,6 +1,6 @@
 from typing import Any, Hashable, Sequence, Tuple, Union
 
-from cytoolz import get
+from toolz import get
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 
 __all__ = ["train_val_test_split", "k_fold", "k_fold_single_test"]

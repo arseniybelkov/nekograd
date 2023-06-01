@@ -2,7 +2,7 @@ from inspect import isfunction
 from typing import Callable, Dict, List, Union
 
 import torch
-from cytoolz.functoolz import juxt
+from toolz.functoolz import juxt
 from more_itertools import zip_equal
 
 

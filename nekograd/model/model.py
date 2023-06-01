@@ -4,7 +4,7 @@ from typing import Callable, Dict, List, Tuple, Union
 import numpy as np
 import torch
 import torch.nn as nn
-from cytoolz import compose, keymap
+from toolz import compose, keymap
 from more_itertools import collapse, unzip
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
