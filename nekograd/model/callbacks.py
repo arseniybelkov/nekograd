@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List
 
@@ -9,7 +10,7 @@ from toolz import keymap
 class TimeProfiler(Callback):
     def __init__(self, *keys: str):
         self._default_keys = (
-            "Train Epoch"
+            "Train Epoch",
             "Validation Epoch",
             "Total Batch Iter",
             "Avg Batch Iter",
@@ -24,14 +25,11 @@ class TimeProfiler(Callback):
             raise ValueError(f"TimeProfiler got unknown keys: {set(_keys) - set(keys)}")
 
         self.keys = sorted(set(keys).union(self._default_keys))
-        self.time_stamps: Dict[str, List[datetime]] = {}
+        self.time_stamps: Dict[str, List[datetime]] = defaultdict(list)
 
     def log_time(self, key: str) -> None:
         if key in self.keys:
-            if key not in self.time_stamps:
-                self.time_stamps[key] = [datetime.now()]
-            else:
-                self.time_stamps[key].append(datetime.now())
+            self.time_stamps[key].append(datetime.now())
 
     def compute_time_delta(self, *keys: str) -> Dict[str, float]:
         def delta(t1, t2=None):
@@ -46,9 +44,9 @@ class TimeProfiler(Callback):
 
         return deltas
 
-    def log_to_logger(self):
+    def log_to_logger(self, pl_module):
         deltas = self.compute_time_delta()
-        self.pl_module.log_dict(keymap(lambda k: f"{self.__class__.__name__}/" + k, deltas), prog_bar=False)
+        pl_module.log_dict(keymap(lambda k: f"{self.__class__.__name__}/" + k, deltas), prog_bar=False)
         self.time_stamps.clear()
 
     def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
@@ -63,7 +61,7 @@ class TimeProfiler(Callback):
 
     def on_train_epoch_end(self, trainer, pl_module):
         self.log_time("Train Epoch")
-        self.log_to_logger()
+        self.log_to_logger(pl_module)
 
     def on_validation_batch_start(self, trainer, pl_module, batch, batch_idx, dataloader_idx=0):
         self.log_time("Avg Validation Step")
@@ -89,4 +87,7 @@ class TimeProfiler(Callback):
     def setup(self, trainer, pl_module, stage: str):
         if stage == "fit":
             self.time_stamps.clear()
-            self.pl_module = pl_module
+
+    def teardown(self, trainer, pl_module, stage: str):
+        if stage == "fit":
+            self.time_stamps.clear()
