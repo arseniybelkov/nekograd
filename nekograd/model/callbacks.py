@@ -4,7 +4,6 @@ from typing import Dict, List
 
 from more_itertools import windowed
 from pytorch_lightning.callbacks import Callback
-from toolz import keymap
 
 
 class TimeProfiler(Callback):
@@ -14,11 +13,17 @@ class TimeProfiler(Callback):
             "validation batch",
             "train epoch",
             "validation epoch",
+            "avg train downtime",
+            "avg val downtime",
         )
-        self._optional_keys = ("backward", "optimizer step")
+        self._optional_keys = (
+            "backward",
+            "optimizer step",
+            "total train downtime",
+            "total val downtime",
+        )
 
-        allowed_keys = self._default_keys + self._optional_keys
-        _keys = sorted(set(keys).intersection(allowed_keys))
+        _keys = sorted(set(keys).intersection(self._optional_keys))
         if _keys != sorted(keys):
             raise ValueError(f"TimeProfiler got unknown keys: {set(_keys) - set(keys)}")
 
@@ -26,10 +31,9 @@ class TimeProfiler(Callback):
         self.time_stamps: Dict[str, List[datetime]] = defaultdict(list)
 
     def log_time(self, key: str) -> None:
-        if key in self.keys:
-            self.time_stamps[key].append(datetime.now())
+        self.time_stamps[key].append(datetime.now())
 
-    def compute_time_delta(self, *keys: str) -> Dict[str, float]:
+    def compute_time_delta(self) -> Dict[str, float]:
         def delta(t1, t2=None):
             if isinstance(t1, (list, tuple)):
                 return (t1[1] - t1[0]).total_seconds()
@@ -40,13 +44,37 @@ class TimeProfiler(Callback):
             if len(time_stamps) % 2 == 1:
                 continue
             deltas[key] = list(map(delta, windowed(time_stamps, 2, step=2)))
+            
+            if key == "train batch":
+                n_train_batches = len(deltas[key])
+            elif key == "validation batch":
+                n_val_batches = len(deltas[key])
+            
             deltas[key] = sum(deltas[key]) / len(deltas[key])
+
+        if "train epoch" in deltas:
+            deltas["total train downtime"] = (
+                deltas["train epoch"]
+                - deltas["validation epoch"]
+                - n_train_batches * deltas["train batch"]
+                - n_train_batches * deltas["optimizer step"]
+                - n_train_batches * deltas["backward"]
+            )
+
+            deltas["total val downtime"] = (
+                deltas["validation epoch"] - n_val_batches * deltas["validation batch"]
+            )
+
+            deltas["avg train downtime"] = (
+                deltas["total train downtime"] / n_train_batches
+            )
+            deltas["avg val downtime"] = deltas["total val downtime"] / n_val_batches
 
         return deltas
 
     def log_to_logger(self, pl_module, clear: bool = True):
         deltas = self.compute_time_delta()
-        pl_module.log_dict(keymap(lambda k: f"{self.__class__.__name__}/" + k, deltas), prog_bar=False)
+        pl_module.log_dict({f"{self.__class__.__name__}/{k}": v for k, v in deltas.items() if k in self.keys}, prog_bar=False)
         if clear:
             self.time_stamps.clear()
 
