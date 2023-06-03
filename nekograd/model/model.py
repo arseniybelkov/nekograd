@@ -45,12 +45,12 @@ class CoreModel(BaseModel):
                 "you must specify "
                 "configure_optimizers method"
             )
-        self.lr_scheduler = {
+        lr_scheduler = {
             "scheduler": self.lr_scheduler,
             "name": "lr_scheduler",
             "interval": "epoch",
         }
-        return [self.optimizer], [self.lr_scheduler]
+        return [self.optimizer], [lr_scheduler]
 
     def forward(self, *xs: torch.Tensor) -> torch.Tensor:
         return self.architecture(*xs)
