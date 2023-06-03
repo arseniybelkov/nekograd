@@ -44,21 +44,18 @@ class TimeProfiler(Callback):
             if len(time_stamps) % 2 == 1:
                 continue
             deltas[key] = list(map(delta, windowed(time_stamps, 2, step=2)))
-            
+
             if key == "train batch":
                 n_train_batches = len(deltas[key])
             elif key == "validation batch":
                 n_val_batches = len(deltas[key])
-            
+
             deltas[key] = sum(deltas[key]) / len(deltas[key])
 
         if "train epoch" in deltas:
+            deltas["train epoch"] -= deltas["validation epoch"]
             deltas["total train downtime"] = (
-                deltas["train epoch"]
-                - deltas["validation epoch"]
-                - n_train_batches * deltas["train batch"]
-                - n_train_batches * deltas["optimizer step"]
-                - n_train_batches * deltas["backward"]
+                deltas["train epoch"] - n_train_batches * deltas["train batch"]
             )
 
             deltas["total val downtime"] = (
@@ -74,7 +71,14 @@ class TimeProfiler(Callback):
 
     def log_to_logger(self, pl_module, clear: bool = True):
         deltas = self.compute_time_delta()
-        pl_module.log_dict({f"{self.__class__.__name__}/{k}": v for k, v in deltas.items() if k in self.keys}, prog_bar=False)
+        pl_module.log_dict(
+            {
+                f"{self.__class__.__name__}/{k}": v
+                for k, v in deltas.items()
+                if k in self.keys
+            },
+            prog_bar=False,
+        )
         if clear:
             self.time_stamps.clear()
 
@@ -93,10 +97,14 @@ class TimeProfiler(Callback):
         self.log_time("train epoch")
         self.log_to_logger(pl_module, True)
 
-    def on_validation_batch_start(self, trainer, pl_module, batch, batch_idx, dataloader_idx=0):
+    def on_validation_batch_start(
+        self, trainer, pl_module, batch, batch_idx, dataloader_idx=0
+    ):
         self.log_time("validation batch")
 
-    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0):
+    def on_validation_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0
+    ):
         self.log_time("validation batch")
         self.log_to_logger(pl_module, False)
 
