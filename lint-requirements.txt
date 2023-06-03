@@ -1,4 +1,5 @@
 black
+autoflake
 flake8<=5
 flake8-tidy-imports
 flake8-quotes

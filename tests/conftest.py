@@ -2,8 +2,7 @@ from pathlib import Path
 
 import pytest
 import pytorch_lightning as pl
-from torch.utils.data import DataLoader
-from torch.utils.data import random_split
+from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
 from torchvision.datasets import MNIST
 

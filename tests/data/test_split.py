@@ -5,7 +5,7 @@ from string import ascii_lowercase
 import numpy as np
 from more_itertools import collapse
 
-from nekograd import k_fold_single_test, k_fold, train_val_test_split
+from nekograd import k_fold, k_fold_single_test, train_val_test_split
 
 ids = tuple(ascii_lowercase)
 x = np.random.randn(len(ids))

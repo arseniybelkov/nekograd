@@ -4,8 +4,8 @@ from typing import Callable, Dict, List, Tuple, Union
 import numpy as np
 import torch
 import torch.nn as nn
-from cytoolz import compose, keymap
 from more_itertools import collapse, unzip
+from toolz import compose, keymap
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
@@ -45,12 +45,12 @@ class CoreModel(BaseModel):
                 "you must specify "
                 "configure_optimizers method"
             )
-        self.lr_scheduler = {
+        lr_scheduler = {
             "scheduler": self.lr_scheduler,
             "name": "lr_scheduler",
             "interval": "epoch",
         }
-        return [self.optimizer], [self.lr_scheduler]
+        return [self.optimizer], [lr_scheduler]
 
     def forward(self, *xs: torch.Tensor) -> torch.Tensor:
         return self.architecture(*xs)
